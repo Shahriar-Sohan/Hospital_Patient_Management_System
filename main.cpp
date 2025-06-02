@@ -42,13 +42,18 @@ class Hospital{
                 std::cout << "no patients registered yet" << std::endl;
                 return;
             }
-            for (int i = 0; i < patients.size(); i++){
+            for (int i = 0; i < patients.size(); ++i){
                 if(patients[i] != nullptr){
                     std::cout << "Patient " << i + 1 << ":\n";
                     patients[i]->displayInfo();
                 }else{
                     std::cout << "Patient " << i + 1 << ": [discharged]\n";
                 }
+            }
+        }
+        ~Hospital(){
+            for (auto p : patients ){
+                delete p;
             }
         }
 };
