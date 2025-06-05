@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <fstream>
 
 class Patient {
     private: 
@@ -10,11 +12,17 @@ class Patient {
         int heartRate;
 
     public:
-        Patient(std::string n, int a){
+        Patient(std::string n, int a, float t, int h){
             name = n;
             age = a;
-            temperature = 36.5;
-            heartRate = 72;
+            temperature = t ? t : 37.5;
+            heartRate = h ? h : 0 ;
+        }
+        Patient(std::string n, int a) {
+            name = n;
+            age = a;
+            temperature = 37.5;
+            heartRate = 0;
         }
         void updateVitals(float temp, int hr){
             temperature = temp;
@@ -25,6 +33,29 @@ class Patient {
             <<"Age: " << age << "\n"
             << "Temp: " << temperature << "deg Celcius" << "\n"
             << "Heart Rate: " << heartRate << " Bpm" << std::endl;
+        }
+        
+        std::string serialize() const {
+            return name + "," +
+                    std::to_string(age) + "," +
+                    std::to_string(temperature) + "," +
+                    std::to_string(heartRate);
+        }
+        static Patient* deserialize(const std::string& line){
+            std::stringstream ss(line);
+            std::string name;
+            std::string ageStr, tempStr, hrStr;
+
+            std::getline (ss, name, ',');
+            std::getline(ss, ageStr, ',');
+            std::getline(ss, tempStr, ',');
+            std::getline(ss, hrStr, ',');
+
+            int age = std::stoi(ageStr);
+            float temp = std::stof(tempStr);
+            int hr = std::stoi(hrStr);
+
+            return new Patient(name, age, temp, hr);
         }
 };
 
@@ -51,6 +82,26 @@ class Hospital{
                 }
             }
         }
+        void saveToFile(const std::string& filename){
+            std::ofstream out(filename);
+            for (auto p : patients){
+                if(p != nullptr){
+                    out << p->serialize() << "\n";
+                }
+            }
+            out.close();
+        }
+        void loadFromFile(const std::string& filename) {
+            std::ifstream in(filename);
+            std::string line;
+            while (std::getline(in, line)) {
+                if (!line.empty()) {
+                    Patient* p = Patient::deserialize(line);
+                    patients.push_back(p);
+                }
+            }
+            in.close();
+        }
         ~Hospital(){
             for (auto p : patients ){
                 delete p;
@@ -60,6 +111,7 @@ class Hospital{
 
 int main() {
     Hospital h;
+    h.loadFromFile("patients.txt");
     std::string choice_str;
 
     do {
@@ -81,5 +133,6 @@ int main() {
         }
     } while (choice_str != "3");
 
+    h.saveToFile("patients.txt");
     return 0;
 }
